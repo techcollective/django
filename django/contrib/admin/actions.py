@@ -41,10 +41,17 @@ def delete_selected(modeladmin, request, queryset):
             raise PermissionDenied
         n = queryset.count()
         if n:
-            for obj in queryset:
-                obj_display = force_unicode(obj)
-                modeladmin.log_deletion(request, obj, obj_display)
-            queryset.delete()
+            qs_delete = getattr(modeladmin, "qs_delete", True)
+            if qs_delete:
+                for obj in queryset:
+                    obj_display = force_unicode(obj)
+                    modeladmin.log_deletion(request, obj, obj_display)
+                queryset.delete()
+            else:
+                for obj in queryset:
+                    obj_display = force_unicode(obj)
+                    obj.delete()
+                    modeladmin.log_deletion(request, obj, obj_display)
             modeladmin.message_user(request, _("Successfully deleted %(count)d %(items)s.") % {
                 "count": n, "items": model_ngettext(modeladmin.opts, n)
             })
